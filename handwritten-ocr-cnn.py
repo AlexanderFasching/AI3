@@ -14,6 +14,7 @@ from matplotlib.gridspec import GridSpec
 from datetime import datetime
 import numpy as np
 import os
+import tensorflow as tf
 
 def display_classification_report(classification_report, figure_path, figure_name, onscreen=True):
     f = open(os.path.join(figure_path, figure_name+'.txt'), 'w')
@@ -165,7 +166,25 @@ print("y_train shape", y_train.shape)
 print("X_test shape", X_test.shape)
 print("y_test shape", y_test.shape)
 
-
+################# hyperparameters we want to change
+print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
+#1
+n_cnn1planes = 15
+third_layer = False
+#2 was 0.001
+learning_rate = 0.1
+#3
+use_schedule = True
+lr_schedule = ExponentialDecay(
+    learning_rate,
+    decay_steps=100000,
+    decay_rate=0.96,
+    staircase=True)
+#4 default is 0.0
+momentum = 0.9
+#5
+droputAfterLastPoolingLayer = True
+dropout = 0.5
 
 
 # normalizing the data 
@@ -178,7 +197,7 @@ print("Shape before one-hot encoding: ", y_train.shape)
 Y_train = to_categorical(y_train, n_classes)
 Y_test = to_categorical(y_test, n_classes)
 print("Shape after one-hot encoding: ", Y_train.shape)
-n_cnn1planes = 15
+
 n_cnn1kernel = 3
 n_poolsize = 1
 
@@ -189,7 +208,6 @@ n_poolsize = 1
 # Stride is a critical parameter for controlling the spatial resolution of the feature maps and influencing the receptive field of the network.
 n_strides = 1
 n_dense = 100
-dropout = 0.3
 
 n_epochs=20
 
@@ -213,6 +231,17 @@ cnn2 = Conv2D(n_cnn1planes*2, kernel_size=(n_cnn1kernel,n_cnn1kernel), strides=(
 model.add(cnn2)
 model.add(MaxPool2D(pool_size=(n_poolsize,n_poolsize)))
 
+# 3rd conv layer
+if(third_layer):
+    model_name += '_3_Layers'
+    cnn3 = Conv2D(n_cnn1planes*3, kernel_size=(n_cnn1kernel,n_cnn1kernel), strides=(n_strides,n_strides), padding='valid', activation='relu')
+    model.add(cnn3)
+    model.add(MaxPool2D(pool_size=(n_poolsize,n_poolsize)))
+
+# dropout Layer
+if(droputAfterLastPoolingLayer):
+    model.add(Dropout(dropout))
+    model_name += '_DropoutAfterLastPoolingLayer_DropoutRate' + str(dropout)
 # flatten output of convolutions
 model.add(Flatten())
 
@@ -223,13 +252,17 @@ model.add(Dense(n_classes, activation='softmax'))
 
 # compiling the sequential model
 
-model_name += '_Optimzer_' + 'SGD'
+model_name += '_Optimzer_' + 'SGDWithMomentum_' + str(momentum)
 
-# vary the constant learning rate
-model_name += '_LearningRate_' + 'Constant'
-learning_rate = 0.001
 
-optimizer=SGD(learning_rate = learning_rate)
+
+if(use_schedule):
+    optimizer=SGD(learning_rate = lr_schedule, momentum = momentum)
+    model_name += '_LearningRate_' + 'ExponentialDecay'
+else:
+    optimizer=SGD(learning_rate = learning_rate, momentum = momentum)
+    # vary the constant learning rate
+    model_name += '_LearningRate_' + 'Constant'
 
 model.compile(loss='categorical_crossentropy', metrics=['accuracy'], optimizer=optimizer)
 
