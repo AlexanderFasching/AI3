@@ -172,12 +172,13 @@ print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 n_cnn1planes = 15
 third_layer = False
 #2 was 0.001
-learning_rate = 0.1
+learning_rate = 1e-2
 #3
 use_schedule = True
+n_epochs=20
 lr_schedule = ExponentialDecay(
     learning_rate,
-    decay_steps=100000,
+    decay_steps=n_epochs,
     decay_rate=0.96,
     staircase=True)
 #4 default is 0.0
@@ -209,7 +210,6 @@ n_poolsize = 1
 n_strides = 1
 n_dense = 100
 
-n_epochs=20
 
 model_name = 'CNN_Handwritten_OCR_CNN'+str(n_cnn1planes)+'_KERNEL'+str(n_cnn1kernel)+'_Epochs' + str(n_epochs)
 #figure_format='svg'
