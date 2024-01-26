@@ -170,8 +170,9 @@ print("y_test shape", y_test.shape)
 print("Num GPUs Available: ", len(tf.config.list_physical_devices('GPU')))
 #1
 n_cnn1planes = 15
-third_layer = False
-#2 was 0.001
+n_cnn3planes = 80
+third_layer = True
+#2 was 0.001 initial: 1e-2
 learning_rate = 1e-2
 #3
 use_schedule = True
@@ -179,7 +180,7 @@ n_epochs=20
 lr_schedule = ExponentialDecay(
     learning_rate,
     decay_steps=n_epochs,
-    decay_rate=0.96,
+    decay_rate=0.9,
     staircase=True)
 #4 default is 0.0
 momentum = 0.9
@@ -233,8 +234,8 @@ model.add(MaxPool2D(pool_size=(n_poolsize,n_poolsize)))
 
 # 3rd conv layer
 if(third_layer):
-    model_name += '_3_Layers'
-    cnn3 = Conv2D(n_cnn1planes*3, kernel_size=(n_cnn1kernel,n_cnn1kernel), strides=(n_strides,n_strides), padding='valid', activation='relu')
+    model_name += '_3rdLayerWith' + str(n_cnn3planes) + 'Planes'
+    cnn3 = Conv2D(n_cnn3planes, kernel_size=(n_cnn1kernel,n_cnn1kernel), strides=(n_strides,n_strides), padding='valid', activation='relu')
     model.add(cnn3)
     model.add(MaxPool2D(pool_size=(n_poolsize,n_poolsize)))
 
